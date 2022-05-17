@@ -218,3 +218,80 @@
 将删除操作放入工作区后，查看状态：
 
 ![image-20210307165622947](git使用技巧.assets/image-20210307165622947.png)
+
+
+
+
+
+## 四， 补充命令
+
+### 1、 取消追踪
+
+> 将文件由被追踪状态变为取消追踪状态，文件并未被删除
+
+```shell
+git rm --cached <filename>
+```
+
+
+
+### 2、提交
+
+1、git commit '注释内容'
+
+2、git commit -m  ‘注释内容’
+
+3、git commit -am ‘注释内容’  ： 相当于 git add . +  git commit -m '注释内容' 两步操作合二为一，但是未提交到暂存区的（未追踪的文件）无法使用该命令提交文件。
+
+
+
+### 3、查看修改前后文件
+
+>查看文件修改前后的区别（未commit之前）
+
+```shell
+# 不带文件名可展示所有的文件的差异
+git diff
+git diff <filename>
+```
+
+![image-20220517193411676](git使用技巧.assets/image-20220517193411676.png)
+
+![image-20220517193952157](git使用技巧.assets/image-20220517193952157.png)
+
+查看add后但未提交的版本差异
+
+```
+git diff --staged
+git diff --staged <filename>
+```
+
+![image-20220517194315924](git使用技巧.assets/image-20220517194315924.png)
+
+
+
+### 4、文件护理
+
+* 忽略文件的名称必须叫`.gitignore`
+
+  * ```
+    /module 忽略名叫module的文件夹及其下面的所有文件
+    *.log   忽略以.log结尾的所有文件
+    a.txt   忽略a.txt这个文件
+    ```
+
+* 已经提交过的文件的忽略
+
+  * ```
+    1、git rm -r --cached . 强制将缓存里面的所有文件剔除（但是本地文件不会删除）
+    2、创建.gitignore文件
+    3、重新提交文件
+    ```
+
+  * ```
+    1、git rm -r --cached <filename> 强制将缓存里面的指定文件剔除（但是本地文件不会删除）
+    2、创建.gitignore文件
+    3、重新提交文件
+    ```
+
+  * 
