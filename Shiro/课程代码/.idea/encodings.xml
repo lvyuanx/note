@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" native2AsciiForPropertiesFiles="true" defaultCharsetForPropertiesFiles="UTF-8">
+    <file url="file://$PROJECT_DIR$/shiro-day01-10springboot-shiro/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-10springboot-shiro/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-11shiro-redis-realm/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-11shiro-redis-realm/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-12shiro-redis-SessionManagerA/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-12shiro-redis-SessionManagerA/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-14shiro-RetryLimit/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-14shiro-RetryLimit/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-15shiro-KickedOut/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-15shiro-KickedOut/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-16shiro-springboot-jwt/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shiro-day01-16shiro-springboot-jwt/src/main/resources" charset="UTF-8" />
+    <file url="PROJECT" charset="UTF-8" />
+  </component>
+</project>
