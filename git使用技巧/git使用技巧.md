@@ -294,5 +294,45 @@ git diff --staged <filename>
     3、重新提交文件
     ```
 
-    
-    
+
+
+
+### 5、回退到上一个版本
+
+未添加到缓冲区还原版本
+
+```
+git checkout -- <filename>
+```
+
+
+
+已经添加到缓冲区还原版本
+
+```
+# 回退到文件的上一步操作
+git reset HEAD <filename>
+# 还原文件
+git checkout -- <filename>
+```
+
+
+
+### 6、版本回退（不保留版本号）
+
+```
+git reset --hard HEAD^ 回退到上一个版本
+git reset --hard HEAD^^ 回退到上上个版本
+git reset --hard HEAD [hash号] 回退到指定版本
+git reflog 查看指针游标
+```
+
+
+
+### 7、回到旧版本 （保留版本号）
+
+```
+git checkout hash号 -- <filename>  # 回退指定文件到指定版本
+git checkout hash号 -- .			  # 回退所有文件到指定版本
+```
+
