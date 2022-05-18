@@ -270,7 +270,7 @@ git diff --staged <filename>
 
 
 
-### 4、文件护理
+### 4、文件忽略
 
 * 忽略文件的名称必须叫`.gitignore`
 
@@ -294,4 +294,5 @@ git diff --staged <filename>
     3、重新提交文件
     ```
 
-  * 
+    
+    
