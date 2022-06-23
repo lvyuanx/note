@@ -181,3 +181,497 @@ public class NotSafeDemo01 {
 解决原理：底层使用lock锁
 
 ![image-20220622163450215](JUC笔记.assets/image-20220622163450215.png)
+
+
+
+
+
+## 2、八锁问题
+
+### 2.1 锁1
+
+>**同一个对象，同一时刻，只允许有一个线程访问同步方法**
+>
+>解释：只要一个线程访问了一个资源类里面的任何一个同步方法，那么它会将整个资源类所在的对象锁住。所以，当短信线程得到资源时，电话线程会等待短信线程释放资源，才会继续向下运行。
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *   * 短信加锁
+ *   * 邮件加锁
+ * 普通调用资源类
+ *
+ * ** 同一个对象，同一时刻，只允许有一个线程访问同步方法
+ *
+ * 解释：只要一个线程访问了一个资源类里面的任何一个同步方法，那么它会将
+ * 整个资源类所在的对象锁住。所以，当短信线程得到资源时，电话线程会等待
+ * 短信线程释放资源，才会继续向下运行。
+ *
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-23 14:05:37
+ */
+public class Demo01 {
+
+    public static void main(String[] args) {
+        Phone phone = new Phone();
+
+        new Thread(() -> {
+            phone.sendSMS();
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone.sendEmail();
+        }).start();
+    }
+}
+
+class Phone{
+    public synchronized void sendSMS(){
+        System.out.println("发送短信");
+    }
+
+    public synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.2 锁2
+
+>解释：只要一个线程访问了一个资源类里面的任何一个同步方法，那么它会将整个资源类所在的对象锁住。所以，当短信线程得到资源时，电话线程会等待短信线程释放资源，才会继续向下运行。
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *     * 短信加锁
+ *     * 邮件加锁
+ *  发短信内部暂停4秒
+ *
+ *  解释：只要一个线程访问了一个资源类里面的任何一个同步方法，那么它会将
+ *  整个资源类所在的对象锁住。所以，当短信线程得到资源时，电话线程会等待
+ *  短信线程释放资源，才会继续向下运行。
+ *
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-23 14:05:37
+ */
+public class Demo02 {
+
+    public static void main(String[] args) {
+        Phone2 phone = new Phone2();
+
+        new Thread(() -> {
+            try {
+                phone.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone.sendEmail();
+        }).start();
+    }
+}
+
+class Phone2{
+    public synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(4);
+        System.out.println("发送短信");
+    }
+
+    public synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.3 锁3
+
+>解释： 同步代码方法，无法锁住普通方法
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *  * 短信加锁
+ *  * 邮件不加锁
+ *  短信内部暂停4秒
+ * </p>
+ *
+ * 解释： 同步代码方法，无法锁住普通方法
+ *
+ * @author lvyx
+ * @since 2022-06-23 14:05:37
+ */
+public class Demo03 {
+
+    public static void main(String[] args) {
+        Phone3 phone = new Phone3();
+
+        new Thread(() -> {
+            try {
+                phone.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone.sendEmail();
+        }).start();
+    }
+}
+
+class Phone3{
+    public synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(4);
+        System.out.println("发送短信");
+    }
+
+    public void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.4 锁4
+
+> 解释：两台手机分别是不同的对象，所以都只能锁住所在对象的同步方法。
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *  * 短信加锁
+ *  * 邮件加锁
+ *  短信内部暂停4秒，使用两台手机分别调用短信和邮件
+ *
+ *  解释：两台手机分别是不同的对象，所以都只能锁住所在对象的同步方法。
+ *
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-23 14:05:37
+ */
+public class Demo04 {
+
+    public static void main(String[] args) {
+        Phone4 phone1 = new Phone4();
+        Phone4 phone2 = new Phone4();
+
+        new Thread(() -> {
+            try {
+                phone1.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone2.sendEmail();
+        }).start();
+    }
+}
+
+class Phone4{
+    public synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(4);
+        System.out.println("发送短信");
+    }
+
+    public synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.5 锁5
+
+>解释： 由于是静态方法，所以锁的是Class类类型，所以，不管是不是同一个对象，他们都是同一个字节码文件。静态同步方法相当于是全局锁。
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *  * 短信加锁，静态方法
+ *  * 邮件加锁，静态方法
+ *  短信内部暂停4秒, 两台手机分别调用短信和邮件方法
+ *
+ *  解释： 由于是静态方法，所以锁的是Class类类型，所以，
+ *  不管是不是同一个对象，他们都是同一个字节码文件。静态同步
+ *  方法相当于是全局锁。
+ *
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-23 15:05:37
+ */
+public class Demo05 {
+
+    public static void main(String[] args) {
+        Phone5 phone1 = new Phone5();
+        Phone5 phone2 = new Phone5();
+
+        new Thread(() -> {
+            try {
+                phone1.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone2.sendEmail();
+        }).start();
+    }
+}
+
+class Phone5{
+    public static synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(4);
+        System.out.println("发送短信");
+    }
+
+    public static synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.6 锁6
+
+>解释： 由于是静态方法，所以锁的是Class类类型，所以，不管是不是同一个对象，他们都是同一个字节码文件。静态同步方法相当于是全局锁。
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *  * 短信加锁，静态方法
+ *  * 邮件加锁，静态方法
+ *  短信内部暂停4秒, 一台手机
+ * </p>
+ *
+ *  解释： 由于是静态方法，所以锁的是Class类类型，所以，
+ *  不管是不是同一个对象，他们都是同一个字节码文件。静态同步
+ *  方法相当于是全局锁。
+ *
+ * @author lvyx
+ * @since 2022-06-23 15:05:37
+ */
+public class Demo06 {
+
+    public static void main(String[] args) {
+        Phone6 phone = new Phone6();
+
+        new Thread(() -> {
+            try {
+                phone.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone.sendEmail();
+        }).start();
+    }
+}
+
+class Phone6{
+    public static synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(6);
+        System.out.println("发送短信");
+    }
+
+    public static synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.7 锁7
+
+>解释：短信锁的是Class对象，而邮件锁的是this对象，两个锁的对象不一样。所以，两把锁不会互相干扰
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *  * 短信加锁，静态方法
+ *  * 邮件加锁
+ *  短信内部暂停4秒, 一台手机
+ *
+ *  解释：短信锁的是Class对象，而邮件锁的是this对象，两个锁的对象不一样
+ *  所以，两把锁不会互相干扰
+ *
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-23 15:05:37
+ */
+public class Demo07 {
+
+    public static void main(String[] args) {
+        Phone7 phone = new Phone7();
+
+        new Thread(() -> {
+            try {
+                phone.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone.sendEmail();
+        }).start();
+    }
+}
+
+class Phone7{
+    public static synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(6);
+        System.out.println("发送短信");
+    }
+
+    public synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
+
+
+### 2.8 锁8
+
+>解释：短信锁的是Class对象，而邮件锁的是this对象，两个锁的对象不一样。所以，两把锁不会互相干扰
+
+```java
+package com.lyx.八锁问题;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ *  * 短信加锁，静态方法
+ *  * 邮件加锁
+ *  短信内部暂停4秒, 两台手机分别调用邮件和短信的方法
+ * </p>
+ *
+ * 解释：短信锁的是Class对象，而邮件锁的是this对象，两个锁的对象不一样
+ * 所以，两把锁不会互相干扰
+ *
+ * @author lvyx
+ * @since 2022-06-23 15:55:37
+ */
+public class Demo08 {
+
+    public static void main(String[] args) {
+        Phone8 phone1 = new Phone8();
+        Phone8 phone2 = new Phone8();
+
+        new Thread(() -> {
+            try {
+                phone1.sendSMS();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+        // 等待100毫秒, 保证短信线程优先抢夺到资源
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            phone2.sendEmail();
+        }).start();
+    }
+}
+
+class Phone8{
+    public static synchronized void sendSMS() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(6);
+        System.out.println("发送短信");
+    }
+
+    public synchronized void sendEmail(){
+        System.out.println("发送邮件");
+    }
+}
+```
+
