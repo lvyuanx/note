@@ -1147,3 +1147,837 @@ public class CyclicBarrierDemo {
 }
 ```
 
+
+
+### 6.3 Semaphore
+
+> 在信号量上我们定义两种操作：
+>
+> * acquire(获取)当一个线程调用acquire操作时，它要么通过成功获取信号量（信号量减1），要么一直等下去，直到有线程释放信号量，或超时。
+> * release(释放)实际上会将信号量的值加1，然后唤醒等待的线程。
+>
+> 信号量主要用于两个目的，**一个是用于多个共享资源的互斥使用**，**另一个用于并发线程数的控制**
+
+```java
+package com.lyx.JUC工具类;
+
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ * 信号灯
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-24 14:56:43
+ */
+public class SemaphoreDemo {
+    public static void main(String[] args) {
+        // 初始化信号量为3的信号灯
+        Semaphore semaphore = new Semaphore(3);
+
+        for (int i = 0; i < 6; i++) {
+            int finalI = i;
+            new Thread(() -> {
+                try {
+                    semaphore.acquire();
+                    System.out.println(Thread.currentThread().getName() + "抢夺到资源 ");
+                    TimeUnit.SECONDS.sleep(finalI);
+                    System.out.println(Thread.currentThread().getName() + "释放资源 ");
+                    semaphore.release();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }, String.valueOf(i)).start();
+        }
+
+    }
+}
+```
+
+
+
+
+
+## 7、读写锁
+
+>多个线程同时读一个资源类没有任何间题，所以为了满足并发量，读取共享资源应该可以同时进行。
+>
+>但是如果有一个线程想写共享资源来，就不应该再有其它线程可以对该资源进行读或写
+>
+>小总结
+>
+>* 读-读 能共存
+>* 读-写 不能共存在
+>* 写-写 不能共存
+
+```java
+package com.lyx.读写锁;
+
+import java.sql.Time;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * <p>
+ * 读写锁
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-24 15:26:40
+ */
+public class ReadWriteLockDemo {
+    public static void main(String[] args) {
+        MaCache maCache = new MaCache();
+        for (int i = 0; i < 6; i++) {
+            int finalI = i;
+            new Thread(() -> {
+                maCache.put(String.valueOf(finalI), finalI);
+            }, "写线程 " + i).start();
+            new Thread(() -> {
+                maCache.get(String.valueOf(finalI));
+            }, "读线程 " + i).start();
+        }
+    }
+}
+
+class MaCache {
+    private volatile Map<String, Object> cacheMap = new HashMap<>();
+    private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
+    public void put(String key, Object value){
+        readWriteLock.writeLock().lock();
+        try{
+            System.out.println(Thread.currentThread().getName() + " 正在写入缓存: " + key);
+            TimeUnit.SECONDS.sleep(1);
+            cacheMap.put(key, value);
+            System.out.println(Thread.currentThread().getName() + " 写入缓存成功");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
+    }
+
+
+    public void get(String key){
+        readWriteLock.readLock().lock();
+        try{
+            System.out.println(Thread.currentThread().getName() + " 正在读取缓存：" + key);
+            TimeUnit.MILLISECONDS.sleep(300);
+            Object result = cacheMap.get(key);
+            System.out.println(Thread.currentThread().getName() + " 读取缓存成功 " + result);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
+    }
+}
+```
+
+
+
+## 8、阻塞队列
+
+>当队列是空的，从队列中**获取**元素的操作将会被阻塞
+>
+>当队列是满的，从队列中**添加**元素的操作将会被阻塞
+
+![image-20220624155405541](JUC笔记.assets/image-20220624155405541.png)
+
+
+
+**用处: **
+
+在多线程领域：所谓阻塞，在某些情况下会**挂起**线程（即阻塞），一旦条件满足，被挂起的线程又会自动**被唤起**为什么需要BlockingQueue,好处是我们不需要关心什么时候需要阻塞线程，什么时候需要唤醒线程，因为这一切BlockingQueue都给你一手包办了
+
+在concurrent包发布以前，在多线程环境下，**我们每个程序员都必须去自己控制这些细节，尤其还要兼顾效率和线程安全**，而这会给我们的程序带来不小的复杂度。
+
+
+
+### 8.1 架构介绍
+
+![image-20220624161548599](JUC笔记.assets/image-20220624161548599.png)
+
+
+
+* **`ArrayBlockingQueue`：由数组结构组成的有界阻塞队列**
+* **`LinkedBlockingQueue`：由链表结构组成的有界（但大小默认值为：Integer.MAX_VALUE）阻塞队列**
+* `PriorityBlockingQueue`：支持优先级排序的无界阻塞队列
+* `DelayQueue`：使用优先级队列实现的延迟无界队列
+* **`SynchronousQueue`：不存储元素的阻塞队列，即单个元素队列**
+* `LinkedTransferQueue`：由链表组成的无界阻塞队列
+* `LinkedBlockingDeque`：由链表组成的双向阻塞队列
+
+
+
+### 8.2 BlockingQueue
+
+**核心方法**
+
+| 方法类型 | 抛出异常  | 特殊值   | 阻塞   | 超时                |
+| -------- | --------- | -------- | ------ | ------------------- |
+| 插入     | add(e)    | offer(e) | put(e) | offer(e, time,unit) |
+| 移除     | remove(e) | poll()   | take() | poll(time, unit)    |
+| 检查     | element() | peek()   | 不可用 | 不可用              |
+
+* 抛出异常
+  * 当阻塞队列满时，再往队列里add插入元素会抛`IllegalStateException:Queue full`
+  * 当阻塞队列空时，再往队列里remove移除元素会抛`NoSuchElementException`
+* 特殊值
+  * 插入方法，成功ture失败false
+  * 移除方法，成功返回出队列的元素，队列里没有就返回null
+* 阻塞
+  * 当阻塞队列满时，生产者线程继续往队列里put元素，队列会一直阻塞生产者线程直到put数据or响应中断退出
+  * 当阻塞队列空时，消费者线程试图从队列里take元素，队列会一直阻塞消费者线程直到队列可用
+* 超时
+  * 当阻塞队列满时，队列会阻塞生产者线程一定时间，超过限时后生产者线程会退出
+
+
+
+## 9、线程池
+
+>**线程池的优势：**
+>
+>线程池做的工作只要是控制运行的线程数量，**处理过程中将任务放入队列**，然后在线程创建后启动这些任务，**如果线程数量超过了最大数量，超出数量的线程排队等候**，等其他线程执行完毕，再从队列中取出任务来执行。
+>
+>**主要特点：**线程复用：控制最大并发数：管理线程。
+>
+>第一：降低资源消耗。通过重复利用己创建的线程降低线程创建和销毁造成的销耗。
+>
+>第二：提高响应速度。当任务到达时，任务可以不需要等待线程创建就能立即执行。
+>
+>第三：提高线程的可管理性。线程是稀缺资源，如果无限制的创建，不仅会销耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。
+
+**架构图**
+
+![image-20220625153521247](JUC笔记.assets/image-20220625153521247.png)
+
+
+
+### 9.1 FixedThreadPool
+
+> 固定线程数量的线程池
+
+```java
+package com.lyx.线程池;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ * 固定数量线程池
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-25 15:45:25
+ */
+public class FixedThreadPoolDemo {
+    public static void main(String[] args) {
+        // 创建5个固定受理线程的线程池
+        ExecutorService pool = Executors.newFixedThreadPool(5);
+
+        try{
+            for (int i = 0; i < 10; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+
+
+    }
+}
+```
+
+**底层源码：**
+
+![image-20220625160817510](JUC笔记.assets/image-20220625160817510.png) 
+
+
+
+### 9.2 SingleThread
+
+>单个线程的线程池
+
+```java
+package com.lyx.线程池;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ * 单个线程的线程池
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-25 15:45:25
+ */
+public class SingleThreadDemo {
+    public static void main(String[] args) {
+        // 单个线程的线程池
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+
+        try{
+            for (int i = 0; i < 10; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+
+
+    }
+}
+```
+
+**底层源码：**
+
+![image-20220625160912927](JUC笔记.assets/image-20220625160912927.png) 
+
+
+
+### 9.3 CachedThreadPool
+
+> 可伸缩线程池
+
+```java
+package com.lyx.线程池;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ * 可伸缩线程池
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-25 16:01:34
+ */
+public class CachedThreadDemo {
+    public static void main(String[] args) {
+        // 创建5个固定受理线程的线程池
+        ExecutorService pool = Executors.newCachedThreadPool();
+
+        try{
+            for (int i = 0; i < 10000; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+    }
+}
+```
+
+**底层源码：**
+
+![image-20220625160935843](JUC笔记.assets/image-20220625160935843.png) 
+
+
+
+### 9.4 七大参数（重点）
+
+> 前面三个创建线程池的方法，底层实际调用的是ThreadPoolEcecutor方法创建的。
+
+![image-20220625163013731](JUC笔记.assets/image-20220625163013731.png)
+
+
+
+1. `coreRoolSize`：线程池中的常驻核心线程数
+2. `maximumPoolSize`：线程池中能够容纳同时执行的最大线程数，此值必须大于等于1
+3. `keepAliveTime`：多余的空闲线程的存活时间当前池中线程数量超过corePoolSizel时，当空闲时间达到keepAliveTimel时，多余线程会被销毁直到只剩下corePoolSize个线程为止
+4. `unit`：keepAliveTime的单位
+5. `workQueue`：任务队列，被提交但尚未被执行的任务
+6. `threadFactory`：表示生成线程池中工作线程的线程工厂用于创建线程，**一般默认的即可**
+7. `handler`：拒绝策略，表示当队列满了，并且工作线程大于等于线程池的最大线程数(maximumPoolSize)时如何来拒绝请求执行的runnablef的策略       
+
+
+
+### 9.5 工作原理
+
+![image-20220626162712181](JUC笔记.assets/image-20220626162712181.png)
+
+![image-20220626162854904](JUC笔记.assets/image-20220626162854904.png)
+
+1. 在创建了线程池后，开始等待请求。
+
+2. 当调用**execute()**方法添加一个请求任务时，线程池会做出如下判断：
+
+   2.1 如果正在运行的线程数量小于**corePoolSize**,那么马上创建线程运行这个任务
+
+   2.2 如果正在运行的线程数量**大于或等于corePoo1Size,那么将这个任务放入队列**：
+
+   2.3如果这个时候队列满了且正在运行的线程数量还**小于maximumPoo1Size,那么还是要创建非核心线程立刻运行这个任务：**
+
+   2.4如果队列满了且正在运行的线程数量**大于或等于maximumPoolSize,那么线程池会启动饱和拒绝策略来执行。**
+
+3. 当一个线程完成任务时，它会从队列中取下一个任务来执行
+4. 当一个线程无事可做**超过一定的时间(keepAliveTime)时**，线程会判断：如果当前运行的线程数**大于corePoolSize**,那么这个线程就被停掉。所以线程池的所有任务完成后**，它最终会收缩到corePoolSize的大小。**
+
+
+
+### 9.6 线程池使用
+
+#### 1、自定义线程池
+
+> 线程池可容纳最大线程数量：线程池最大线程数 + 阻塞队列容量
+
+```java
+package com.lyx.线程池;
+
+import java.util.concurrent.*;
+
+/**
+ * <p>
+ * 自定义线程池
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 16:48:22
+ */
+public class MyThreadPoolDemo1 {
+    public static void main(String[] args) {
+        ExecutorService pool = new ThreadPoolExecutor(
+                2,
+                5,
+                3L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        try{
+            for (int i = 0; i < 9; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+
+    }
+}
+```
+
+当超过可容纳最大线程数量时，会报错如下图：
+
+![image-20220626165456157](JUC笔记.assets/image-20220626165456157.png)
+
+#### 2、拒绝策略
+
+>**等待队列已经排满了**，再也塞不下新任务了同时，线程池中的**max线程也达到了**，无法继续为新任务服务。这个时候我们就需要拒绝策略机制合理的处理这个问题。
+
+**四大拒绝策略: **
+
+1. `AbortPolicy(默认)`：直接抛出RejectedExecutionException异常阻I止系统正常运行
+2. `CallerRunsPolicy`："调用者运行”一种调节机制，该策略既不会抛弃任务，也不会抛出异常，而是将某些任务回退到调用者，从而降低新任务的流量。
+3. `DiscardOldestPolicy`：抛弃队列中等待最久的任务，然后把当前任务加人队列中尝试再次提交当前任务。
+4. `DiscardPolicy`：该策略默默地丢弃无法处理的任务，不予任何处理也不抛出异常。如果允许任务丢失，这是最好的一种策略。
+
+
+
+**AbortPolicy**
+
+```java
+package com.lyx.线程池.四大拒绝策略;
+
+import java.util.concurrent.*;
+
+/**
+ * <p>
+ * 拒绝策略 -- 直接抛出异常
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 17:03:03
+ */
+public class AbortPolicyDemo {
+    public static void main(String[] args) {
+        ExecutorService pool = new ThreadPoolExecutor(
+                2,
+                5,
+                3L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        try{
+            for (int i = 0; i < 9; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+    }
+}
+```
+
+运行结果：
+
+![image-20220626171202720](JUC笔记.assets/image-20220626171202720.png)
+
+
+
+**CallerRunsPolicy**
+
+```JAVA
+package com.lyx.线程池.四大拒绝策略;
+
+import java.util.concurrent.*;
+
+/**
+ * <p>
+ * 拒绝策略 -- 返回给调用者
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 17:03:03
+ */
+public class CallerRunsPolicyDemo {
+    public static void main(String[] args) {
+        ExecutorService pool = new ThreadPoolExecutor(
+                2,
+                5,
+                3L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.CallerRunsPolicy());
+
+        try{
+            for (int i = 0; i < 20; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+    }
+}
+```
+
+运行结果：
+
+![image-20220626171846225](JUC笔记.assets/image-20220626171846225.png)
+
+
+
+**DiscardPolicy**
+
+```java
+package com.lyx.线程池.四大拒绝策略;
+
+import java.util.concurrent.*;
+
+/**
+ * <p>
+ * 拒绝策略 -- 抛弃任务
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 17:03:03
+ */
+public class DiscardPolicyDemo {
+    public static void main(String[] args) {
+        ExecutorService pool = new ThreadPoolExecutor(
+                2,
+                5,
+                3L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.DiscardPolicy());
+
+        try{
+            for (int i = 0; i < 20; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+    }
+}
+```
+
+运行结果：
+
+![image-20220626172000882](JUC笔记.assets/image-20220626172000882.png)
+
+
+
+**DiscardOldPolicy**
+
+```java
+package com.lyx.线程池.四大拒绝策略;
+
+import java.util.concurrent.*;
+
+/**
+ * <p>
+ * 拒绝策略 -- 抛弃等的最久的任务
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 17:03:03
+ */
+public class DiscardOldPolicyDemo {
+    public static void main(String[] args) {
+        ExecutorService pool = new ThreadPoolExecutor(
+                2,
+                5,
+                3L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.DiscardOldestPolicy());
+
+        try{
+            for (int i = 0; i < 20; i++) {
+                int finalI = i;
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"开始");
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(Thread.currentThread().getName() + " 线程处理任务"+ finalI +"结束");
+                });
+            }
+        } finally {
+            // 关闭线程池
+            pool.shutdown();
+        }
+    }
+}
+```
+
+运行结果：
+
+![image-20220626172103991](JUC笔记.assets/image-20220626172103991.png)
+
+
+
+
+
+#### 3、线程池的选择
+
+> 不推荐使用原生的三个创建线程池的方法：FixedThreadPool/ SingleThread/CachedThreadPool
+
+![image-20220626163925264](JUC笔记.assets/image-20220626163925264.png)
+
+
+
+## 10、分支合并ForkJoin
+
+```java
+package com.lyx.分支合并ForkJoin;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveTask;
+
+/**
+ * <p>
+ * 分支合并框架
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 19:08:28
+ */
+public class ForkJoinDemo {
+    public static void main(String[] args) {
+        // 资源类
+        MyTask myTask = new MyTask(0, 100);
+
+        // 创建线程池
+        ForkJoinPool pool = new ForkJoinPool();
+        try{
+            ForkJoinTask<Integer> forkJoinTask = pool.submit(myTask);
+            Integer result = forkJoinTask.get();
+            System.out.println("result: " + result);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            pool.shutdown();
+        }
+
+    }
+}
+
+class MyTask extends RecursiveTask<Integer>{
+
+    /**
+     * 临界值
+     **/
+    private static final Integer ADJUST_VALUE = 10;
+
+    /**
+     * 起始值
+     **/
+    private int begin;
+    /**
+     * 结束值
+     **/
+    private int end;
+    /**
+     * 结果
+     **/
+    private int result;
+
+    public MyTask(int begin, int end) {
+        this.begin = begin;
+        this.end = end;
+    }
+
+    @Override
+    protected Integer compute() {
+        if ((end - begin) > ADJUST_VALUE){
+            // 大于临界值，继续分支合并
+            int middle = (end + begin) / 2;
+            MyTask myTask1 = new MyTask(begin, middle);
+            MyTask myTask2 = new MyTask(middle + 1, end );
+            // 分支
+            myTask1.fork();
+            myTask2.fork();
+            // 合并
+            result = myTask1.join() + myTask2.join();
+        }else {
+            // 计算结果
+            for (int i = begin; i <= end; i++) {
+                result += i;
+            }
+        }
+        return result;
+    }
+}
+```
+
+
+
+## 11、异步回调
+
+```java
+package com.lyx.异步回调;
+
+import java.sql.Time;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * <p>
+ * 异步回调
+ * </p>
+ *
+ * @author lvyx
+ * @since 2022-06-26 23:18:15
+ */
+public class CompletableFutureDemo {
+    public static void main(String[] args) throws Exception {
+        // 不带返回值的异步回调
+        CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> {
+            System.out.println(Thread.currentThread() + " 不带返回值的异步回调");
+        });
+        Void voidResult = voidCompletableFuture.get();
+        System.out.println(voidResult);
+        // 带返回值的异步回调
+        CompletableFuture<String> stringCompletableFuture = CompletableFuture.supplyAsync(() -> {
+            System.out.println(Thread.currentThread().getName() + " 带返回值的异步回调");
+//            throw new RuntimeException();  // 模拟异常
+            return "ok";
+        });
+        String result = stringCompletableFuture.whenComplete((res, exception) -> {
+            // 成功回调
+            System.out.println("result: " + res);
+            System.out.println("exception: " + exception);
+        }).exceptionally(exception -> {
+            // 异常回调
+            System.out.println("exception: " + exception);
+            return "error";
+        }).get();
+        System.out.println(result);
+
+    }
+}
+```
+
