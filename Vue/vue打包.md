@@ -108,7 +108,7 @@ STATICFILES_DIRS = (
 )
 ```
 
-表示django会拦截所有请求根目录(http://127.0.0.1:8080/)下的"/static/"请求`http://127.0.0.1:8080/static/xxx/xxx.js`的请求方式，会被转发到配置好的静态资源目录下面
+表示django会拦截所有请求根目录`http://127.0.0.1:8080/`下的"/static/"请求, 例如：`http://127.0.0.1:8080/static/xxx/xxx.js`的请求方式，会被转发到配置好的静态资源目录下面。
 
 即：http://127.0.0.1:8080/static/xxx/xxx.js 会请求到django项目跟目录下的 static目录下的xxx目录下的xxx.js
 
