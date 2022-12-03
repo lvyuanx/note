@@ -38,7 +38,17 @@ vscode 安装插件，使开发vue3时候有代码提示：
 
 
 
-### 3. vue2 与 vue3的区别
+### 3. 启动命令
+
+> "dev": "vite",   									开发环境下的启动命令
+>
+>  "build": "vue-tsc && vite build", 	打包命令
+>
+>  "preview": "vite preview" 				预览打包的项目
+
+
+
+### 4. vue2 与 vue3的区别
 
 1. v-if 与 v-for的优先级
 
