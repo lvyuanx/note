@@ -22,17 +22,17 @@
 
 
 ## 二、DOM
-### 2.2 什么是DOM?
+### 2.1 什么是DOM?
 
 - DOM(Document Object Model - 文档对象模型)是用来**呈现**以及与任意HTML或者XML文档**交互**的Api
 
 
-### 2.3 什么是DOM树？
+### 2.2 什么是DOM树？
 
 - 将HTML文档以树状结构直观的表现出来，我们称之为文档树或DOM树
 
 
-### 2.4 什么是DOM对象？
+### 2.3 什么是DOM对象？
 
 -   浏览器根据Html标签生成的**js对象**
     -   所有的标签属性都可以在这个对象上面找到
@@ -45,7 +45,7 @@
     -   网页所有的内容都在document里面
 
 
-### 2.5 获取DOM元素
+### 2.4 获取DOM元素
 
 > 查找页面中的DOM元素就是利用js选择页面中的标签元素
 
@@ -95,7 +95,7 @@ querySelectorAll得到的是一个**伪数组**：
 要想得到里面的每一个对象，则需要遍历的方式获得。
 
 
-### 2.6 操作元素内容
+### 2.5 操作元素内容
 
 > 目标： 能够修改元素的文本更换内容
 
@@ -127,7 +127,7 @@ querySelectorAll得到的是一个**伪数组**：
    box.innerText = '<strong>hello world</strong>' // 修改文字内容
    ```
 
-### 2.7 操作元素属性
+### 2.6 操作元素属性
 
 1. 修改元素的**常用**属性
 
@@ -541,3 +541,132 @@ querySelectorAll得到的是一个**伪数组**：
       ```javascript
       实际对象.preventDefault()
       ```
+
+
+### 2.11 其它事件
+
+#### 1. 页面加载事件
+
+* 加载外部资源（如图片、外联CSS和avaScript等）加载完毕时触发的事件
+* 为什么要学？
+    - 有些时候需要等页面资源全部处理完了做一些事情
+    - 老代码喜欢把script写在head中，这时候直接找dom元素找不到
+
+1. `load`
+  * 监听页面所有资源加载完成：
+     - 给window添加load事件
+        ```javascript
+        window.addEventListener('load', () => {})
+        ```
+     - 注意：不光可以监听整个页面的资源加载完毕，也可以针对某个资源绑定load事件
+
+2. `DOMContentLoaded`
+   * 当初始的HTML文档被完全加载和解析完成之后，DOMContentLoaded事件被触发，而无需等待样式表、图像等完全加载
+   * 监听页面DOM加载完毕：
+      - 给document添加DOMContentLoaded事件
+         ```javascript
+         document.addEventListener('DOMContentLoaded', () => {})
+         ```
+
+#### 2. 页面滚动事件
+
+* 滚动条在页面滚动的时候持续触发的事件
+* 为什么要学？
+  - 很多网页需要检测用户把页面滚动到某个区域后做一些处理
+
+1. `scroll`
+   * 监听整个页面滚动：
+      ```javascript
+      window.addEventListener('scroll', () => {})
+      ```
+      - 给window或者给document添加`scroll`事件都可以
+   * 监听某个元素的内部滚动直接给元素添加`scroll`事件即可
+   * 获取滚动位置
+      - `scrollLeft`属性：被卷去的x轴距离（可读写）
+      - `scrollTop`属性：被卷去的y轴距离（可读写）
+        ```javascript
+        const div = document.querySelector(".box")
+        div.addEventListener('scroll', () => {
+          console.log(div.scrollTop)
+        })
+
+        // 获取页面滚动
+        window.addEventListener('scroll', () => {
+          // 获取html
+          const html = document.documentElement
+          console.log(html.scrollTop)
+        })
+        ```
+
+#### 3. 页面尺寸事件
+
+* 会在窗口尺寸改变的时候触发的事件
+    - `resize`
+      ```javascript
+      window.addEventListener('resize', () => {})
+      ```
+
+* 获取元素宽高
+  - 获取元素的可见部分宽高（不包含边框，margin， 滚动条）
+  - `clientWidth` 和 `clientHeight`
+
+* 元素尺寸位置
+  - 获取宽高：
+    - 获取元素的自身宽高、包含元素自身设置的宽高、padding、border
+    - `offsetWidth` 和 `offsetHeight`
+
+* 获取元素位置
+  - **获取元素距离自己最近一级带有定位的祖先元素**的左、上距离
+  - `offsetLef` 和 `offsetTop` (只读)
+
+
+### 2.12 查找DOM节点
+
+1. DOM节点
+
+   * DOM树里面的每一个内容都成为节点
+   * 节点类型
+     - 元素节点
+       - 所有的标签，比如：body div
+       - html是根节点
+     - 属性节点
+       - 所有的属性，如：href src
+     - 文件节点
+       - 所有的文本内容
+     - 其它
+
+2. 查找节点
+
+    * 节点的关系： 针对的找亲戚返回的都是对象
+      - 父节点
+      - 兄弟节点
+      - 子节点
+    * `父节点查找`
+      - `parentNode` 属性
+      - 返回最近一级父节点，找不懂返回null
+        ```javascript
+        子元素.parentNode
+        ```
+    * `子节点查找`
+      - `childNodes` 属性
+        - 获得所有子节点，包括文本节点（空格，换行）、注释等等
+      - **`children` 属性 （重点）**
+        - **仅获得所有元素节点**
+        - 返回的还是一个伪数组
+          ```javascript
+          子元素.children
+          ```
+    * `兄弟节点查找`
+      - `nextElementSibling` 属性
+        - 查找下一个兄弟节点
+          ```javascript
+          DOM元素.nextElementSibling
+          ```
+      - `previousElementSibling` 属性
+        - 查找上一个兄弟节点
+          ```javascript
+          DOM元素.nextElementSibling
+          ```
+
+3. 增加节点
+4. 删除节点
