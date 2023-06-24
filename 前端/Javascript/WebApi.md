@@ -669,4 +669,24 @@ querySelectorAll得到的是一个**伪数组**：
           ```
 
 3. 增加节点
+
+   * 创建节点
+      - 即创造出一个新的节点添加到网页内，一般是先创建然后插入
+      - 创建节点的方法
+        ```javascript
+        document.createElement('标签名')
+        ```
+   * 追加节点
+      - 想要在界面中看到，还得插到某个父元素中
+      - 插到父元素的最后一个子元素
+        ```javascript
+        父元素.appendChild(被插入的元素)
+        ```
+      - 插到父元素中的某一个子元素
+        ```javascript
+        父元素.insertBefore(要插入的元素，在哪个元素前面)
+        // 示例
+        ul.insertBefore(li, ul.children[0])
+        ```
+
 4. 删除节点
